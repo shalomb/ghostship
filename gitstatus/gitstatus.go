@@ -9,21 +9,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type gitrepo struct {
-	branch       string
-	remoteBranch string
-	localBranch  string
-	remote       string
-	rev          string
-	revShort     string
-	isDirty      bool
-	ab           string
-	status       uint
-}
-
-type gitStatusMask uint
-
 const (
+	NAME = "gitstatus"
+
 	ahead      gitStatusMask = 1 << iota // "⇡"
 	behind                               // "⇣"
 	conflicted                           // "="
@@ -60,8 +48,36 @@ var (
 	orange = "\u001b[38;5;208m"
 )
 
+type gitStatusRenderer struct {
+	bitrate uint
+}
+
+func Renderer() *gitStatusRenderer {
+	return &gitStatusRenderer{}
+}
+
+func (i *gitStatusRenderer) Name() string {
+	return NAME
+}
+
+type gitrepo struct {
+	branch       string
+	remoteBranch string
+	remote       string
+	rev          string
+	revShort     string
+	isDirty      bool
+	ab           string
+	status       uint
+}
+
+type gitStatusMask uint
+
 func init() {
-	localBranch, remote, remoteBranch, _ := gitRemote()
+	remote, _ := gitRemote()
+	thisRepo.remote = remote
+
+	localBranch, remote, remoteBranch, _ := gitSymbolicRef()
 	thisRepo.branch = localBranch
 	thisRepo.remote = remote
 	thisRepo.remoteBranch = remoteBranch
@@ -81,7 +97,7 @@ func init() {
 }
 
 // Status ...
-func Status() string {
+func (r *gitStatusRenderer) Render() (string, error) {
 	branchColor := green
 	if thisRepo.isDirty {
 		branchColor = orange
@@ -92,7 +108,7 @@ func Status() string {
 		thisRepo.branch,
 		reset,
 		thisRepo.ab,
-	)
+	), nil
 }
 
 func isGitRepoDirty() bool {
@@ -139,6 +155,14 @@ func gitStatus() (uint, error) {
 	return thisRepo.status, err
 }
 
+func gitRemote() (string, error) {
+	stdout, err := _git([]string{
+		"git",
+		"remote",
+	}...)
+	return string(stdout), err
+}
+
 func gitRev() (string, string, error) {
 	stdout, err := _git([]string{
 		"git",
@@ -148,21 +172,47 @@ func gitRev() (string, string, error) {
 	return string(stdout), string(stdout)[0:8], err
 }
 
-func gitRemote() (string, string, string, error) {
+func gitRemoteLocal() (string, string, string, error) {
 	stdout, err := _git(
 		[]string{
 			"git",
 			"symbolic-ref",
-			"refs/remotes/origin/HEAD",
+			"HEAD",
 		}...)
 	if err != nil {
 		return stdout, stdout, stdout, err
 	}
 	el := strings.Split(string(stdout), "/")
 	branch := el[len(el)-1]
+	remote := ""
+	remoteBranch := branch
+	log.Debugf("gitRemoteLocal: %+v +%v +%v", branch, remote, remoteBranch)
+	return branch, remote, remoteBranch, err
+}
+
+func gitSymbolicRef() (string, string, string, error) {
+	if thisRepo.remote == "" {
+		log.Printf("thisRepo.remote: [%+v]", thisRepo.remote)
+		return gitRemoteLocal()
+	}
+	stdout, err := _git(
+		// TODO: HAndle the case where this repo is entirely local and has no remotes
+		[]string{
+			"git",
+			"symbolic-ref",
+			fmt.Sprintf("refs/remotes/%s/HEAD", thisRepo.remote),
+		}...)
+	if err != nil {
+		// TODO: Calling gitRemoteLocal here is not ideal as we make an assumption that because
+		// origin/HEAD is missing that the repo is entirely local. This is fallacious.
+		// It's possible that the remote is not called 'origin'
+		return "", "", "", err
+	}
+	el := strings.Split(string(stdout), "/")
+	branch := el[len(el)-1]
 	remote := el[len(el)-2]
 	remoteBranch := fmt.Sprintf("%s/%s", remote, branch)
-	log.Debugf("gitRemote: %+v +%v +%v", branch, remote, remoteBranch)
+	log.Debugf("gitSymbolicRef: %+v +%v +%v", branch, remote, remoteBranch)
 	return branch, remote, remoteBranch, err
 }
 

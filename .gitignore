@@ -62,3 +62,4 @@ tags
 submodules/**
 .config/submodules/**
 main
+args.go
