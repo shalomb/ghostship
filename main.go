@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	// "reflect"
 
 	xdg "github.com/adrg/xdg"
 
+	character "github.com/shalomb/ghostship/character"
 	config "github.com/shalomb/ghostship/config"
 	directory "github.com/shalomb/ghostship/directory"
 	gitstatus "github.com/shalomb/ghostship/gitstatus"
+	linebreak "github.com/shalomb/ghostship/linebreak"
 	renderer "github.com/shalomb/ghostship/renderer"
 	time "github.com/shalomb/ghostship/time"
 
@@ -20,14 +23,16 @@ func main() {
 		log.Fatalf("Unable to source config file: %v", err)
 	}
 
-	requiredModules, configFields := config.Parse(cfgFile)
-	log.Printf("config:\n%+v\n%+v\n", requiredModules, configFields)
+	conf, requiredModules, configFields := config.Parse(cfgFile)
+	log.Debugf("config:\n%+v\n%+v\n", requiredModules, configFields)
 
 	handler := renderer.New()
 	renderers := make(map[string]renderer.Renderer)
 
-	renderers["gitstatus"] = gitstatus.Renderer()
+	renderers["character"] = character.Renderer()
 	renderers["directory"] = directory.Renderer()
+	renderers["gitstatus"] = gitstatus.Renderer()
+	renderers["linebreak"] = linebreak.Renderer()
 	renderers["time"] = time.Renderer()
 
 	for _, v := range requiredModules {
@@ -38,7 +43,11 @@ func main() {
 		}
 		handler.SetRenderer(val)
 
-		rendered, err := handler.Render()
+		// if val.Name() == "time" {
+		// 	log.Printf("time: %+v", configFields["time"])
+		// }
+
+		rendered, err := handler.Render(conf, configFields[val.Name()])
 		if err == nil {
 			fmt.Printf("%s", rendered)
 		} else {

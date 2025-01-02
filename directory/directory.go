@@ -4,25 +4,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/shalomb/ghostship/config"
 )
 
 const (
 	name = "directory"
 )
 
-type directoryRenderer struct{}
+// DirectoryRenderer ...
+type DirectoryRenderer struct{}
 
 // Renderer ...
-func Renderer() *directoryRenderer {
-	return &directoryRenderer{}
+func Renderer() *DirectoryRenderer {
+	return &DirectoryRenderer{}
 }
 
-func (i *directoryRenderer) Name() string {
+// Name ...
+func (i *DirectoryRenderer) Name() string {
 	return name
 }
 
 // Render ...
-func (r *directoryRenderer) Render() (string, error) {
+func (r *DirectoryRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)

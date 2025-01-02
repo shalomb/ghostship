@@ -2,7 +2,11 @@ package time
 
 import (
 	"bytes"
+	"fmt"
 	"time"
+
+	colors "github.com/shalomb/ghostship/colors"
+	config "github.com/shalomb/ghostship/config"
 
 	strftime "github.com/lestrrat-go/strftime"
 	log "github.com/sirupsen/logrus"
@@ -27,13 +31,25 @@ func (r *TimeRenderer) Name() string {
 }
 
 // Render ...
-func (r *TimeRenderer) Render() (string, error) {
+func (r *TimeRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
 	// return pwd, filepath.Base(pwd)
 	var buf bytes.Buffer
 
-	f, err := strftime.New(`%H%M%S`)
-	if err := f.Format(&buf, time.Now()); err != nil {
+	cfg := c.TimeConfig
+	log.Debugf("TimeConfig: %+v, s: %+v, v: %+v", c, e, cfg.Format)
+
+	tf, err := strftime.New(cfg.Format)
+	if err := tf.Format(&buf, time.Now()); err != nil {
 		log.Println(err.Error())
 	}
-	return buf.String(), err
+
+	style := cfg.Style
+	ret := fmt.Sprintf(
+		"%s%s%s",
+		colors.ByName(style),
+		buf.String(),
+		colors.Reset,
+	)
+
+	return ret, err
 }

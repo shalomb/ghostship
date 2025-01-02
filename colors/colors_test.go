@@ -38,3 +38,19 @@ func TestHexToAnsi(t *testing.T) {
 	// }
 	// log.Printf("\n")
 }
+
+func TestColorByName(t *testing.T) {
+	for _, s := range []struct {
+		name  string
+		color string
+	}{
+		{"Black", "#000000"},
+		{"Lime", "#00FF00"},
+	} {
+		assert.Equal(t,
+			ByName(s.name),
+			"\x1b[38;5;%!d(<nil>)m", // nil because colorprofile.Detect() does not render under go test
+			"",
+		)
+	}
+}

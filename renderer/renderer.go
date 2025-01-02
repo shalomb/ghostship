@@ -1,12 +1,15 @@
+// Package renderer ...
 package renderer
 
 import (
+	config "github.com/shalomb/ghostship/config"
 	log "github.com/sirupsen/logrus"
 )
 
+// Renderer ...
 type Renderer interface {
 	Name() string
-	Render() (string, error)
+	Render(config.TomlConfig, interface{}) (string, error)
 }
 
 // ComponentRenderer ...
@@ -14,17 +17,19 @@ type ComponentRenderer struct {
 	Renderer Renderer
 }
 
+// New ...
 func New() *ComponentRenderer {
 	ip := &ComponentRenderer{}
-	log.Printf("init Renderer: %+v", ip)
+	log.Debugf("init Renderer: %+v", ip)
 	return ip
 }
 
+// SetRenderer ...
 func (i *ComponentRenderer) SetRenderer(renderer Renderer) {
 	i.Renderer = renderer
 }
 
-func (i *ComponentRenderer) Render() (string, error) {
-	return i.Renderer.Render()
+// Render ...
+func (i *ComponentRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
+	return i.Renderer.Render(c, "")
 }
-

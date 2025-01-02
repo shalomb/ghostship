@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	config "github.com/shalomb/ghostship/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,11 +53,12 @@ type gitStatusRenderer struct {
 	bitrate uint
 }
 
+// Renderer ...
 func Renderer() *gitStatusRenderer {
 	return &gitStatusRenderer{}
 }
 
-func (i *gitStatusRenderer) Name() string {
+func (r *gitStatusRenderer) Name() string {
 	return NAME
 }
 
@@ -97,7 +99,7 @@ func init() {
 }
 
 // Status ...
-func (r *gitStatusRenderer) Render() (string, error) {
+func (r *gitStatusRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
 	branchColor := green
 	if thisRepo.isDirty {
 		branchColor = orange
@@ -192,7 +194,7 @@ func gitRemoteLocal() (string, string, string, error) {
 
 func gitSymbolicRef() (string, string, string, error) {
 	if thisRepo.remote == "" {
-		log.Printf("thisRepo.remote: [%+v]", thisRepo.remote)
+		log.Debugf("thisRepo.remote: [%+v]", thisRepo.remote)
 		return gitRemoteLocal()
 	}
 	stdout, err := _git(

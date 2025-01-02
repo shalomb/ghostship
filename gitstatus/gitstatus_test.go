@@ -11,4 +11,3 @@ import (
 func TestGitStatus(t *testing.T) {
     assert.Equal(t, "foo", "foo", "foo != foo")
 }
-
