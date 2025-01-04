@@ -9,7 +9,7 @@ import (
 // Renderer ...
 type Renderer interface {
 	Name() string
-	Render(config.TomlConfig, interface{}) (string, error)
+	Render(config.AppConfig, config.EnvironmentConfig) (string, error)
 }
 
 // ComponentRenderer ...
@@ -30,6 +30,6 @@ func (i *ComponentRenderer) SetRenderer(renderer Renderer) {
 }
 
 // Render ...
-func (i *ComponentRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
-	return i.Renderer.Render(c, "")
+func (i *ComponentRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) (string, error) {
+	return i.Renderer.Render(c, e)
 }

@@ -16,7 +16,7 @@ import (
 
 func TestTimeFormat(t *testing.T) {
 	renderer := Renderer()
-	actual, err := renderer.Render(config.DefaultConfig(), "")
+	actual, err := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{})
 	assert.Equal(t, err, nil, "Error not empty")
 
 	var buf bytes.Buffer
@@ -29,7 +29,7 @@ func TestTimeFormat(t *testing.T) {
 
 	log.Printf("TestTimeFormat out: %+v match:%v", actual, expected)
 	assert.Equal(t,
-        fmt.Sprintf("\x1b[38;5;%%!d(<nil>)m%s\x1b[0m", buf.String()),
+        fmt.Sprintf("\x1b[38;5;28m%s\x1b[0m", buf.String()),
         actual,
         "Rendered time string must match",
     )

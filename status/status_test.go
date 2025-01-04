@@ -1,4 +1,4 @@
-package character
+package status
 
 import (
 	// "regexp"
@@ -9,17 +9,17 @@ import (
 	assert "github.com/stretchr/testify/assert"
 )
 
-func TestCharacterFormat(t *testing.T) {
+func TestStatusFormat(t *testing.T) {
 	renderer := Renderer()
 	actual, err := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{})
 	assert.Equal(t, err, nil, "Error not empty")
 
-    expected := "❯ "
+	expected := "❯ "
 
-    log.Printf("character render: actual: %v, expected: %v", actual, expected)
-    assert.Equal(t,
-        actual,
-        actual,
-        "Rendered character must match",
-    )
+	log.Printf("status render: actual: %v, expected: %v", actual, expected)
+	assert.Equal(t,
+		actual,
+		actual,
+		"Rendered status must match",
+	)
 }

@@ -21,6 +21,6 @@ func (r *CharacterRenderer) Name() string {
 }
 
 // Render ...
-func (r *CharacterRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
+func (r *CharacterRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) (string, error) {
 	return "\n", nil
 }

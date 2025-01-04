@@ -31,7 +31,7 @@ func (r *TimeRenderer) Name() string {
 }
 
 // Render ...
-func (r *TimeRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
+func (r *TimeRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) (string, error) {
 	// return pwd, filepath.Base(pwd)
 	var buf bytes.Buffer
 

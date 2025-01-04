@@ -1,6 +1,7 @@
 package colors
 
 import (
+	"fmt"
 	color "image/color"
 	"testing"
 
@@ -44,12 +45,12 @@ func TestColorByName(t *testing.T) {
 		name  string
 		color string
 	}{
-		{"Black", "#000000"},
-		{"Lime", "#00FF00"},
+		{"black", "16"},
+		{"lime", "46"},
 	} {
 		assert.Equal(t,
 			ByName(s.name),
-			"\x1b[38;5;%!d(<nil>)m", // nil because colorprofile.Detect() does not render under go test
+			fmt.Sprintf("\x1b[38;5;%sm", s.color), // nil because colorprofile.Detect() does not render under go test
 			"",
 		)
 	}

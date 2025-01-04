@@ -6,9 +6,12 @@ import (
 	"regexp"
 	"strings"
 
+	colors "github.com/shalomb/ghostship/colors"
 	config "github.com/shalomb/ghostship/config"
 	log "github.com/sirupsen/logrus"
 )
+
+type gitStatusMask uint
 
 const (
 	NAME = "gitstatus"
@@ -27,31 +30,11 @@ const (
 )
 
 var (
-	thisRepo = &gitrepo{}
-	// gitStatusSyms = []string{"⇡", "⇣", "=", "✘", "⇕", "!", "»", "+", "$", "?", ""}
-
-	black     = "\033[30m"
-	bold      = "\033[1m"
-	invert    = "\033[7m"
-	italic    = "\033[3m"
-	reset     = "\033[0m"
-	underline = "\033[4m"
-
-	blue    = "\033[34m"
-	cyan    = "\033[36m"
-	gray    = "\033[37m"
-	green   = "\033[32m"
-	magenta = "\033[35m"
-	red     = "\033[31m"
-	white   = "\033[97m"
-	yellow  = "\033[33m"
-
-	orange = "\u001b[38;5;208m"
+	thisRepo      = &gitrepo{}
+	gitStatusSyms = []string{"⇡", "⇣", "=", "✘", "⇕", "!", "»", "+", "$", "?", ""}
 )
 
-type gitStatusRenderer struct {
-	bitrate uint
-}
+type gitStatusRenderer struct{}
 
 // Renderer ...
 func Renderer() *gitStatusRenderer {
@@ -63,63 +46,59 @@ func (r *gitStatusRenderer) Name() string {
 }
 
 type gitrepo struct {
-	branch       string
-	remoteBranch string
-	remote       string
-	rev          string
-	revShort     string
-	isDirty      bool
-	ab           string
-	status       uint
+	isGitDirectory bool
+	branch         string
+	remoteBranch   string
+	remote         string
+	rev            string
+	revShort       string
+	isDirty        bool
+	ab             string
+	status         string
 }
-
-type gitStatusMask uint
 
 func init() {
-	remote, _ := gitRemote()
-	thisRepo.remote = remote
+	thisRepo.isGitDirectory = isGitDirectory()
 
-	localBranch, remote, remoteBranch, _ := gitSymbolicRef()
-	thisRepo.branch = localBranch
-	thisRepo.remote = remote
-	thisRepo.remoteBranch = remoteBranch
+	if thisRepo.isGitDirectory {
+		remote, _ := gitRemote()
+		thisRepo.remote = remote
 
-	status, _ := gitStatus()
-	thisRepo.status = status
+		localBranch, remote, remoteBranch, _ := gitSymbolicRef()
+		thisRepo.branch = localBranch
+		thisRepo.remote = remote
+		thisRepo.remoteBranch = remoteBranch
 
-	isDirty := isGitRepoDirty()
-	thisRepo.isDirty = isDirty
+		status, _ := gitStatus()
+		thisRepo.status = status
 
-	rev, revShort, _ := gitRev()
-	thisRepo.rev = rev
-	thisRepo.revShort = revShort
+		isDirty := isGitRepoDirty()
+		thisRepo.isDirty = isDirty
 
-	ab, _ := gitAheadBehind(thisRepo.branch)
-	thisRepo.ab = ab
+		rev, revShort, _ := gitRev()
+		thisRepo.rev = rev
+		thisRepo.revShort = revShort
+
+		ab, _ := gitAheadBehind(thisRepo.branch)
+		thisRepo.ab = ab
+	}
 }
 
-// Status ...
-func (r *gitStatusRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
-	branchColor := green
-	if thisRepo.isDirty {
-		branchColor = orange
+func isGitDirectory() bool {
+	cmd := exec.Command(
+		"git", "rev-parse", "--is-inside-work-tree",
+	)
+	stdout, err := cmd.Output()
+	if err != nil {
+		return false
 	}
-	log.Debugf("thisRepo : %+v", thisRepo)
-	return fmt.Sprintf("%s%s%s%s",
-		branchColor,
-		thisRepo.branch,
-		reset,
-		thisRepo.ab,
-	), nil
+	log.Debugf("isGitDirectory: %+v", string(stdout))
+	return true
 }
 
 func isGitRepoDirty() bool {
 	cmd := exec.Command(
-		"git",
-		"diff",
-		"--no-ext-diff",
-		"--quiet",
-		"--exit-code",
+		"git", "diff", "--no-ext-diff", "--quiet", "--exit-code",
 	)
 	stdout, err := cmd.Output()
 	if err != nil {
@@ -129,47 +108,55 @@ func isGitRepoDirty() bool {
 	return false
 }
 
-func gitStatus() (uint, error) {
+func gitStatus() (string, error) {
 	cmd := exec.Command(
-		"git",
-		"status",
-		"--porcelain",
+		"git", "status", "--porcelain",
 	)
 	stdout, err := cmd.Output()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
+	var status gitStatusMask
 	for _, line := range strings.Split(string(stdout), "\n") {
 		r, _ := regexp.Compile(`^\s*(\S+)`)
 		st := r.FindString(line)
 		for _, rne := range st {
 			switch string(rne) {
 			case "?":
-				thisRepo.status |= uint(untracked)
+				status |= (untracked)
 			case "A":
-				thisRepo.status |= uint(staged)
+				status |= (staged)
 			case "M":
-				thisRepo.status |= uint(modified)
+				status |= (modified)
 			}
 		}
 	}
-	return thisRepo.status, err
+
+	var ret string
+	for k, v := range []gitStatusMask{
+		ahead, behind, conflicted, deleted, diverged,
+		modified, renamed, staged, stashed, untracked,
+		up_to_date,
+	} {
+		r := status & v
+		if r != 0 {
+			ret += gitStatusSyms[k]
+		}
+	}
+	return ret, err
 }
 
 func gitRemote() (string, error) {
 	stdout, err := _git([]string{
-		"git",
-		"remote",
+		"git", "remote",
 	}...)
 	return string(stdout), err
 }
 
 func gitRev() (string, string, error) {
 	stdout, err := _git([]string{
-		"git",
-		"rev-parse",
-		"HEAD",
+		"git", "rev-parse", "HEAD",
 	}...)
 	return string(stdout), string(stdout)[0:8], err
 }
@@ -177,9 +164,7 @@ func gitRev() (string, string, error) {
 func gitRemoteLocal() (string, string, string, error) {
 	stdout, err := _git(
 		[]string{
-			"git",
-			"symbolic-ref",
-			"HEAD",
+			"git", "symbolic-ref", "HEAD",
 		}...)
 	if err != nil {
 		return stdout, stdout, stdout, err
@@ -200,8 +185,7 @@ func gitSymbolicRef() (string, string, string, error) {
 	stdout, err := _git(
 		// TODO: HAndle the case where this repo is entirely local and has no remotes
 		[]string{
-			"git",
-			"symbolic-ref",
+			"git", "symbolic-ref",
 			fmt.Sprintf("refs/remotes/%s/HEAD", thisRepo.remote),
 		}...)
 	if err != nil {
@@ -221,23 +205,26 @@ func gitSymbolicRef() (string, string, string, error) {
 func gitAheadBehind(branch string) (string, error) {
 	stdout, err := _git(
 		[]string{
-			"git",
-			"rev-list",
-			"--left-right",
-			"--count",
+			"git", "rev-list", "--left-right", "--count",
 			fmt.Sprintf("origin/%[1]s..%[1]s", branch),
 		}...)
 	if err != nil {
-		return "", err
+		return "-?", err
 	}
 	v := strings.Split(string(stdout), "\t")
-	ret := red
-	if len(v) == 0 { // No ahead/behind
-		ret = ret + fmt.Sprintf("+%s", reset)
-	} else if v[0] != v[1] { // ahead/behind differ
-		ret = ret + fmt.Sprintf("%s-%s%s%s+%s%s%s", red, green, v[0], red, green, v[1], reset)
+
+	ret := ""
+	if len(v) != 0 && v[0] != v[1] { // ahead/behind differ
+		a := ""
+		b := ""
+		if v[0] != "0" {
+			a = fmt.Sprintf("-%s", v[0])
+		}
+		if v[1] != "0" {
+			b = fmt.Sprintf("+%s", v[1])
+		}
+		ret = fmt.Sprintf("%s%s", a, b)
 	}
-	log.Debugf("gitAheadBehind: %+v", ret)
 	return ret, err
 }
 
@@ -250,4 +237,34 @@ func _git(s ...string) (string, error) {
 
 	log.Debugf("_git(%+v): %+v", s, stdout)
 	return strings.TrimSuffix(string(stdout), "\n"), err
+}
+
+// Render ...
+func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfig) (string, error) {
+	cfg := c.GitStatusConfig
+
+	if !thisRepo.isGitDirectory {
+		return "", nil
+	}
+
+	status := thisRepo.branch
+	statusColor := colors.ByExpression(cfg.NormalStyle)
+	if thisRepo.isDirty {
+		statusColor = colors.ByExpression(cfg.DirtyStyle)
+		status = fmt.Sprintf(
+			"%s%s%s%s%s",
+			thisRepo.branch,
+			colors.ByExpression(cfg.DriftStyle),
+			thisRepo.ab,
+			colors.ByExpression(cfg.SymbolStyle),
+			thisRepo.status,
+		)
+	}
+
+	log.Debugf("thisRepo : %+v", thisRepo)
+	return fmt.Sprintf("%s%s%s",
+		statusColor,
+		status,
+		colors.Reset,
+	), nil
 }

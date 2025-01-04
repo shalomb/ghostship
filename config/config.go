@@ -11,6 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// EnvironmentConfig ...
+type EnvironmentConfig map[string]any
+
 // BaseComponentConfig ...
 type BaseComponentConfig struct {
 	Disabled bool   `toml:"disabled"`
@@ -25,6 +28,11 @@ type CharacterConfig struct {
 	ErrorSymbol   string `toml:"error_symbol"`
 }
 
+// CommandNumberConfig ...
+type CommandNumberConfig struct {
+	BaseComponentConfig
+}
+
 // DirectoryConfig ...
 type DirectoryConfig struct {
 	BaseComponentConfig
@@ -33,6 +41,15 @@ type DirectoryConfig struct {
 // GitStatusConfig ...
 type GitStatusConfig struct {
 	BaseComponentConfig
+	NormalStyle string `toml:"normal_style"`
+	DirtyStyle  string `toml:"dirty_style"`
+	SymbolStyle string `toml:"symbol_style"`
+	DriftStyle  string `toml:"drift_style"`
+}
+
+// Status ...
+type StatusConfig struct {
+	BaseComponentConfig
 }
 
 // TimeConfig ...
@@ -40,18 +57,20 @@ type TimeConfig struct {
 	BaseComponentConfig
 }
 
-// TomlConfig ...
-type TomlConfig struct {
-	Format          string
-	CharacterConfig `toml:"character"`
-	DirectoryConfig `toml:"directory"`
-	GitStatusConfig `toml:"gitstatus"`
-	TimeConfig      `toml:"time"`
+// AppConfig ...
+type AppConfig struct {
+	Format              string
+	CharacterConfig     `toml:"character"`
+	CommandNumberConfig `toml:"commandno"`
+	DirectoryConfig     `toml:"directory"`
+	GitStatusConfig     `toml:"gitstatus"`
+	StatusConfig        `toml:"status"`
+	TimeConfig          `toml:"time"`
 }
 
 // DefaultConfig ...
-func DefaultConfig() TomlConfig {
-	return TomlConfig{
+func DefaultConfig() AppConfig {
+	return AppConfig{
 		Format: "foo",
 		CharacterConfig: CharacterConfig{
 			BaseComponentConfig{
@@ -60,6 +79,17 @@ func DefaultConfig() TomlConfig {
 			},
 			"[❯](bold green) ", // SuccessSymbol
 			"[❯](bold red) ",   // ErrorSymbol
+		},
+		CommandNumberConfig: CommandNumberConfig{
+			BaseComponentConfig{
+				Format: "!",
+				Style:  "gray bold",
+			},
+		},
+		StatusConfig: StatusConfig{
+			BaseComponentConfig{
+				Style: "green",
+			},
 		},
 		TimeConfig: TimeConfig{
 			BaseComponentConfig{
@@ -71,7 +101,7 @@ func DefaultConfig() TomlConfig {
 }
 
 // Parse ...
-func Parse(cfgFile string) (TomlConfig, []string, map[string]string) {
+func Parse(cfgFile string) (AppConfig, []string, map[string]string) {
 	conf := DefaultConfig()
 
 	tomlData, err := os.ReadFile(cfgFile)

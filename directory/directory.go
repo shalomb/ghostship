@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	colors "github.com/shalomb/ghostship/colors"
+    log "github.com/sirupsen/logrus"
 	"github.com/shalomb/ghostship/config"
 )
 
@@ -26,12 +28,27 @@ func (i *DirectoryRenderer) Name() string {
 }
 
 // Render ...
-func (r *DirectoryRenderer) Render(c config.TomlConfig, e interface{}) (string, error) {
+func (r *DirectoryRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) (string, error) {
+	cfg := c.DirectoryConfig
+
+    // TODO: Parse and use format
+    log.Debugf("DirectoryConfig:\nc:%+v\ns:%+v\nv:%+v", cfg, e, cfg.Format)
+
 	pwd, err := os.Getwd()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+        return pwd, err
 	}
 	// return pwd, filepath.Base(pwd)
-	return filepath.Base(pwd), err
+
+    style := colors.ByExpression(cfg.Style)
+    symbol := filepath.Base(pwd)
+
+	ret := fmt.Sprintf(
+		"\\[%s\\]\\[%s\\]\\[%s\\]",
+		style,
+        symbol,
+		colors.Reset,
+	)
+
+	return ret, nil
 }
