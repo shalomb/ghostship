@@ -11,6 +11,7 @@ import (
 	commandno "github.com/shalomb/ghostship/commandno"
 	config "github.com/shalomb/ghostship/config"
 	directory "github.com/shalomb/ghostship/directory"
+	duration "github.com/shalomb/ghostship/duration"
 	gitstatus "github.com/shalomb/ghostship/gitstatus"
 	linebreak "github.com/shalomb/ghostship/linebreak"
 	renderer "github.com/shalomb/ghostship/renderer"
@@ -23,7 +24,7 @@ var (
 	terminalWidth uint16
 	pipeStatus    uint16
 	lastStatus    uint16
-	cmdDuration   uint64
+	cmdDuration   uint16
 
 	promptCmd = &cobra.Command{
 		Use:   "prompt --status $? --pipestatus $PIPESTATUS --cmd-duration N --terminal-width $COLUMNS",
@@ -50,7 +51,7 @@ func init() {
 	promptCmd.Flags().Uint16VarP(&pipeStatus, "pipestatus", "p", pipeStatus, "Value of $PIPESTATUS")
 	_ = promptCmd.MarkFlagRequired("pipestatus")
 
-	promptCmd.Flags().Uint64VarP(&cmdDuration, "cmd-duration", "t", cmdDuration, "The duration in milliseconds the last command took")
+	promptCmd.Flags().Uint16VarP(&cmdDuration, "cmd-duration", "t", cmdDuration, "The duration in milliseconds the last command took")
 	// _ = promptCmd.MarkFlagRequired("cmd-duration")
 
 	rootCmd.AddCommand(promptCmd)
@@ -73,6 +74,7 @@ func renderPS1(args []string) error {
 	renderers["character"] = character.Renderer()
 	renderers["commandno"] = commandno.Renderer()
 	renderers["directory"] = directory.Renderer()
+	renderers["duration"] = duration.Renderer()
 	renderers["gitstatus"] = gitstatus.Renderer()
 	renderers["linebreak"] = linebreak.Renderer()
 	renderers["status"] = status.Renderer()

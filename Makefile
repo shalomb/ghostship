@@ -43,7 +43,7 @@ endif
 
 build: build-env
 	echo $(GO) build $(GOFLAGS)
-	for os in darwin linux; do
+	for os in linux; do # darwin
 	  GOOS=$${os} GOARCH=$(GOARCH) go build $(GOFLAGS) -o $(APPNAME)-$${os}-$(GOARCH)
 	done
 	ln -svf "./ghostship-$${os}-$(GOARCH)" "./ghostship"

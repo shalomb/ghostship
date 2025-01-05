@@ -55,33 +55,35 @@ chpwd () {
 }
 
 prompt-command() {
-    local _last_cmd_ec="$1" _last_cmd_pipestatus="$2";
+    local _last_cmd_ec="$1" _last_cmd_pipestatus="$2" cmd_end_time="$3";
+
+    (( _last_cmd_ec != 0 || _last_cmd_pipestatus != 0 )) && call-if-defined bell-alert;
+    [[ ${_pwd:=$PWD} != $PWD ]] && call-if-defined chpwd;
 
     local -a ARGS=(
         --terminal-width="${COLUMNS}"
         --status="$_last_cmd_ec"
         --pipestatus="$_last_cmd_pipestatus"
     );
-    if [[ -n "${GS_START_TIME-}" ]]; then
-        GS_END_TIME=$(%[1]s time);
-        GS_DURATION=$((GS_END_TIME - GS_START_TIME));
-        ARGS+=(--cmd-duration="${GS_DURATION}");
-    fi;
-    GS_START_TIME="";
 
+    if [[ -n $cmd_start_time ]]; then
+        local cmd_duration=$((cmd_end_time - cmd_start_time));
+        ARGS+=(--cmd-duration="${cmd_duration}");
+    fi;
+    cmd_start_time=;
+
+    PS0='${cmd_start_time:0:$((cmd_start_time=$SECONDS,0))}';
     PS1="$(%[1]s prompt "${ARGS[@]}")";
+    _pwd="$PWD";
 }
 
 PROMPT_COMMAND='
-    _last_cmd_ec=$? _last_cmd_pipestatus=(${PIPESTATUS[@]});
+    _last_cmd_end_time="$SECONDS" _last_cmd_pipestatus=(${PIPESTATUS[@]}) _last_cmd_ec=$?;
     _last_cmd_pipestatus_result="$_last_cmd_pipestatus";
     for f in "${_last_cmd_pipestatus[@]}"; do
         if (( f != 0 )); then _last_cmd_pipestatus_result="$f"; fi;
     done;
-    (( _last_cmd_ec != 0 || _last_cmd_pipestatus_result != 0 )) && call-if-defined bell-alert;
-    [[ ${_pwd:=$PWD} != $PWD ]] && call-if-defined chpwd;
-    call-if-defined prompt-command "$_last_cmd_ec" "$_last_cmd_pipestatus_result";
-    _pwd="$PWD";
+    call-if-defined prompt-command "$_last_cmd_ec" "$_last_cmd_pipestatus_result" "$_last_cmd_end_time";
   '
                 `)
 			fmt.Printf(fstr, c)

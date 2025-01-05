@@ -34,6 +34,12 @@ type CommandNumberConfig struct {
 }
 
 // DirectoryConfig ...
+type DurationConfig struct {
+	BaseComponentConfig
+	MinTime uint16 `toml:"min_time"`
+}
+
+// DirectoryConfig ...
 type DirectoryConfig struct {
 	BaseComponentConfig
 }
@@ -63,6 +69,7 @@ type AppConfig struct {
 	CharacterConfig     `toml:"character"`
 	CommandNumberConfig `toml:"commandno"`
 	DirectoryConfig     `toml:"directory"`
+	DurationConfig      `toml:"duration"`
 	GitStatusConfig     `toml:"gitstatus"`
 	StatusConfig        `toml:"status"`
 	TimeConfig          `toml:"time"`
@@ -85,6 +92,13 @@ func DefaultConfig() AppConfig {
 				Format: "!",
 				Style:  "gray bold",
 			},
+		},
+		DurationConfig: DurationConfig{
+			BaseComponentConfig{
+				Format: "took %ds",
+				Style:  "gray bold",
+			},
+			2, // MinTime
 		},
 		StatusConfig: StatusConfig{
 			BaseComponentConfig{
