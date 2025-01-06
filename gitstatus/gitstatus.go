@@ -3,13 +3,13 @@ package gitstatus
 
 import (
 	"fmt"
+	// log "github.com/sirupsen/logrus"
 	"os/exec"
 	"regexp"
 	"strings"
 
 	colors "github.com/shalomb/ghostship/colors"
 	config "github.com/shalomb/ghostship/config"
-	log "github.com/sirupsen/logrus"
 )
 
 type gitStatusMask uint
@@ -52,7 +52,6 @@ type gitrepo struct {
 	isDirty        bool
 	isGitDirectory bool
 	remote         string
-	remoteBranch   string
 	rev            string
 	revShort       string
 	status         string
@@ -66,13 +65,11 @@ func init() {
 		bare := isGitRepoBare()
 		thisRepo.isBare = bare
 
+		branch, _ := gitCurrentBranch()
+		thisRepo.branch = branch
+
 		remote, _ := gitRemote()
 		thisRepo.remote = remote
-
-		localBranch, remote, remoteBranch, _ := gitSymbolicRef()
-		thisRepo.branch = localBranch
-		thisRepo.remote = remote
-		thisRepo.remoteBranch = remoteBranch
 
 		status, statusMask, _ := gitStatus()
 		thisRepo.status = status
@@ -87,21 +84,29 @@ func init() {
 			thisRepo.revShort = revShort
 		}
 
-		ab, _ := gitAheadBehind(thisRepo.branch)
+		ab, _ := gitAheadBehind(thisRepo.branch, thisRepo.remote)
 		thisRepo.aheadBehind = ab
 	}
 }
 
+func gitCurrentBranch() (string, error) {
+	stdout, err := _git([]string{
+		"git", "branch", "--show-current",
+	}...)
+	if err != nil {
+		return "", nil
+	}
+	return stdout, err
+}
+
 func isGitDirectory() bool {
-	cmd := exec.Command(
+	stdout, err := _git([]string{
 		"git", "rev-parse", "--is-inside-work-tree",
-	)
-	stdout, err := cmd.Output()
+	}...)
 	if err != nil {
 		return false
 	}
-	log.Debugf("isGitDirectory: %+v", string(stdout))
-	return true
+	return stdout == "true"
 }
 
 func isGitRepoBare() bool {
@@ -115,24 +120,21 @@ func isGitRepoBare() bool {
 }
 
 func isGitRepoDirty() bool {
-	cmd := exec.Command(
+	stdout, err := _git([]string{
 		"git", "diff", "--no-ext-diff", "--quiet", "--exit-code",
-	)
-	stdout, err := cmd.Output()
+	}...)
 	if err != nil {
 		return true
 	}
-	log.Debugf("isGitRepoDirty: %+v", stdout)
-	return false
+	return stdout != ""
 }
 
 func gitStatus() (string, gitStatusMask, error) {
 	var status gitStatusMask
 
-	cmd := exec.Command(
+	stdout, err := _git([]string{
 		"git", "status", "--porcelain",
-	)
-	stdout, err := cmd.Output()
+	}...)
 	if err != nil {
 		return "", status, err
 	}
@@ -140,6 +142,8 @@ func gitStatus() (string, gitStatusMask, error) {
 	for _, line := range strings.Split(string(stdout), "\n") {
 		r, _ := regexp.Compile(`^\s*(\S+)`)
 		statusField := r.FindString(line)
+		// TODO: This is a naive parsing of the columns and so ignores nuances.
+		// Consider handling ours vs theirs differently
 		for _, xy := range statusField {
 			switch string(xy) {
 			case "?":
@@ -182,70 +186,32 @@ func gitRev() (string, string, error) {
 	return string(stdout), string(stdout)[0:8], err
 }
 
-func gitRemoteLocal() (string, string, string, error) {
-	stdout, err := _git(
-		[]string{
-			"git", "symbolic-ref", "HEAD",
-		}...)
-	if err != nil {
-		return stdout, stdout, stdout, err
-	}
-	el := strings.Split(string(stdout), "/")
-	branch := el[len(el)-1]
-	remote := ""
-	remoteBranch := branch
-	log.Debugf("gitRemoteLocal: %+v +%v +%v", branch, remote, remoteBranch)
-	return branch, remote, remoteBranch, err
-}
-
-func gitSymbolicRef() (string, string, string, error) {
-	if thisRepo.remote == "" {
-		log.Debugf("thisRepo.remote: [%+v]", thisRepo.remote)
-		return gitRemoteLocal()
-	}
-	stdout, err := _git(
-		// TODO: HAndle the case where this repo is entirely local and has no remotes
-		[]string{
-			"git", "symbolic-ref",
-			fmt.Sprintf("refs/remotes/%s/HEAD", thisRepo.remote),
-		}...)
-	if err != nil {
-		// TODO: Calling gitRemoteLocal here is not ideal as we make an assumption that because
-		// origin/HEAD is missing that the repo is entirely local. This is fallacious.
-		// It's possible that the remote is not called 'origin'
-		return "", "", "", err
-	}
-	el := strings.Split(string(stdout), "/")
-	branch := el[len(el)-1]
-	remote := el[len(el)-2]
-	remoteBranch := fmt.Sprintf("%s/%s", remote, branch)
-	log.Debugf("gitSymbolicRef: %+v +%v +%v", branch, remote, remoteBranch)
-	return branch, remote, remoteBranch, err
-}
-
-func gitAheadBehind(branch string) (string, error) {
+func gitAheadBehind(branch string, remote string) (string, error) {
 	stdout, err := _git(
 		[]string{
 			"git", "rev-list", "--left-right", "--count",
-			fmt.Sprintf("origin/%[1]s..%[1]s", branch),
+			fmt.Sprintf("%[1]s/%[2]s..%[2]s", remote, branch),
 		}...)
 	if err != nil {
 		return "-?", err
 	}
-	v := strings.Split(string(stdout), "\t")
+
+	if stdout == "" {
+		return "", nil
+	}
 
 	ret := ""
-	if len(v) != 0 && v[0] != v[1] { // ahead/behind differ
-		a := ""
-		b := ""
-		if v[0] != "0" {
-			a = fmt.Sprintf("-%s", v[0])
-		}
-		if v[1] != "0" {
-			b = fmt.Sprintf("+%s", v[1])
-		}
-		ret = fmt.Sprintf("%s%s", a, b)
+	v := strings.Split(stdout, "\t")
+
+	a := ""
+	b := ""
+	if v[0] != "0" {
+		a = fmt.Sprintf("-%s", v[0]) // TODO: Config parameter
 	}
+	if v[1] != "0" {
+		b = fmt.Sprintf("+%s", v[1]) // TODO: Config parameter
+	}
+	ret = fmt.Sprintf("%s%s", a, b)
 	return ret, err
 }
 
@@ -255,8 +221,6 @@ func _git(s ...string) (string, error) {
 	if err != nil {
 		return string(stdout), err
 	}
-
-	log.Debugf("_git(%+v): %+v", s, stdout)
 	return strings.TrimSuffix(string(stdout), "\n"), err
 }
 
