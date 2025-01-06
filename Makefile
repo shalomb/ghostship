@@ -53,7 +53,7 @@ RUN_ARGS          := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(RUN_ARGS):;@:)
 
 .PHONY: audit build build-env serve watch run test
-.SILENT: test
+.SILENT: clean test
 
 # https://www.alexedwards.net/blog/a-time-saving-makefile-for-your-go-projects
 
