@@ -26,7 +26,7 @@ const (
 	staged                               // "+"
 	stashed                              // "$"
 	untracked                            // "?"
-	up_to_date                           // ""
+	upToDate                             // ""
 )
 
 var (
@@ -53,8 +53,9 @@ type gitrepo struct {
 	rev            string
 	revShort       string
 	isDirty        bool
-	ab             string
+	aheadBehind    string
 	status         string
+	statusMask     gitStatusMask
 }
 
 func init() {
@@ -69,8 +70,9 @@ func init() {
 		thisRepo.remote = remote
 		thisRepo.remoteBranch = remoteBranch
 
-		status, _ := gitStatus()
+		status, statusMask, _ := gitStatus()
 		thisRepo.status = status
+		thisRepo.statusMask = statusMask
 
 		isDirty := isGitRepoDirty()
 		thisRepo.isDirty = isDirty
@@ -80,7 +82,7 @@ func init() {
 		thisRepo.revShort = revShort
 
 		ab, _ := gitAheadBehind(thisRepo.branch)
-		thisRepo.ab = ab
+		thisRepo.aheadBehind = ab
 	}
 }
 
@@ -108,16 +110,17 @@ func isGitRepoDirty() bool {
 	return false
 }
 
-func gitStatus() (string, error) {
+func gitStatus() (string, gitStatusMask, error) {
+	var status gitStatusMask
+
 	cmd := exec.Command(
 		"git", "status", "--porcelain",
 	)
 	stdout, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", status, err
 	}
 
-	var status gitStatusMask
 	for _, line := range strings.Split(string(stdout), "\n") {
 		r, _ := regexp.Compile(`^\s*(\S+)`)
 		st := r.FindString(line)
@@ -137,14 +140,14 @@ func gitStatus() (string, error) {
 	for k, v := range []gitStatusMask{
 		ahead, behind, conflicted, deleted, diverged,
 		modified, renamed, staged, stashed, untracked,
-		up_to_date,
+		upToDate,
 	} {
 		r := status & v
 		if r != 0 {
 			ret += gitStatusSyms[k]
 		}
 	}
-	return ret, err
+	return ret, status, err
 }
 
 func gitRemote() (string, error) {
@@ -247,21 +250,32 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 		return "", nil
 	}
 
-	status := thisRepo.branch
 	statusColor := colors.ByExpression(cfg.NormalStyle)
+
+	symbol := fmt.Sprintf("%s%s", colors.ByExpression(cfg.SymbolStyle), thisRepo.status)
+	drift := fmt.Sprintf("%s%s", colors.ByExpression(cfg.DriftStyle), thisRepo.aheadBehind)
+
+	status := fmt.Sprintf(
+		"%s%s%s",
+		thisRepo.branch,
+		drift,
+		symbol,
+	)
+
 	if thisRepo.isDirty {
+		// repo has unstaged changes to committed files
 		statusColor = colors.ByExpression(cfg.DirtyStyle)
-		status = fmt.Sprintf(
-			"%s%s%s%s%s",
-			thisRepo.branch,
-			colors.ByExpression(cfg.DriftStyle),
-			thisRepo.ab,
-			colors.ByExpression(cfg.SymbolStyle),
-			thisRepo.status,
-		)
+	} else if thisRepo.statusMask&modified != 0 {
+		// all changes staged but not yet committed
+		statusColor = colors.ByExpression(cfg.StagedStyle)
+	} else if thisRepo.statusMask&untracked != 0 {
+		// untracked files exist
+		status = fmt.Sprintf("%s%s", thisRepo.branch, symbol)
+	} else {
+		// default case
+		status = thisRepo.branch
 	}
 
-	log.Debugf("thisRepo : %+v", thisRepo)
 	return fmt.Sprintf("%s%s%s",
 		statusColor,
 		status,

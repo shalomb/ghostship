@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	cmd "github.com/shalomb/ghostship/cmd"
@@ -28,7 +27,6 @@ var (
 )
 
 func main() {
-	fmt.Sprintf("Got time: %v", os.Args)
 	if err := cmd.InitCobra(
 		cmd.BuildParams{
 			AppName:   AppName,

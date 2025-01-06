@@ -23,7 +23,7 @@ func Renderer() *DirectoryRenderer {
 }
 
 // Name ...
-func (i *DirectoryRenderer) Name() string {
+func (r *DirectoryRenderer) Name() string {
 	return name
 }
 

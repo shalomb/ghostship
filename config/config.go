@@ -33,7 +33,7 @@ type CommandNumberConfig struct {
 	BaseComponentConfig
 }
 
-// DirectoryConfig ...
+// DurationConfig ...
 type DurationConfig struct {
 	BaseComponentConfig
 	MinTime uint16 `toml:"min_time"`
@@ -47,13 +47,14 @@ type DirectoryConfig struct {
 // GitStatusConfig ...
 type GitStatusConfig struct {
 	BaseComponentConfig
-	NormalStyle string `toml:"normal_style"`
 	DirtyStyle  string `toml:"dirty_style"`
-	SymbolStyle string `toml:"symbol_style"`
 	DriftStyle  string `toml:"drift_style"`
+	NormalStyle string `toml:"normal_style"`
+	StagedStyle string `toml:"staged_style"`
+	SymbolStyle string `toml:"symbol_style"`
 }
 
-// Status ...
+// StatusConfig ...
 type StatusConfig struct {
 	BaseComponentConfig
 }

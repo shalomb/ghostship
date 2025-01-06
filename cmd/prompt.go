@@ -90,7 +90,7 @@ func renderPS1(args []string) error {
 
 		rendered, err := handler.Render(conf, env)
 		if err != nil {
-			log.Warnf("Failure in Renderer: %v", rendered)
+			log.Warnf("Failure in Renderer: %v, %v", err, rendered)
 			return err
 		}
 		fmt.Printf("%s", rendered)
