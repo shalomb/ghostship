@@ -1,3 +1,4 @@
+// Package gitstatus ...
 package gitstatus
 
 import (
@@ -14,22 +15,21 @@ import (
 type gitStatusMask uint
 
 const (
-	NAME = "gitstatus"
-
-	ahead      gitStatusMask = 1 << iota // "⇡"
-	behind                               // "⇣"
-	conflicted                           // "="
-	deleted                              // "✘"
-	diverged                             // "⇕"
-	modified                             // "!"
-	renamed                              // "»"
-	staged                               // "+"
-	stashed                              // "$"
-	untracked                            // "?"
-	upToDate                             // ""
+	ahead     gitStatusMask = 1 << iota // "⇡"
+	behind                              // "⇣"
+	unmerged                            // "=" // also conflicted
+	deleted                             // "✘"
+	diverged                            // "⇕"
+	modified                            // "!"
+	renamed                             // "»"
+	staged                              // "+"
+	stashed                             // "$"
+	untracked                           // "?"
+	upToDate                            // ""
 )
 
 var (
+	moduleName    = "gitstatus"
 	thisRepo      = &gitrepo{}
 	gitStatusSyms = []string{"⇡", "⇣", "=", "✘", "⇕", "!", "»", "+", "$", "?", ""}
 )
@@ -42,7 +42,7 @@ func Renderer() *gitStatusRenderer {
 }
 
 func (r *gitStatusRenderer) Name() string {
-	return NAME
+	return moduleName
 }
 
 type gitrepo struct {
@@ -123,22 +123,24 @@ func gitStatus() (string, gitStatusMask, error) {
 
 	for _, line := range strings.Split(string(stdout), "\n") {
 		r, _ := regexp.Compile(`^\s*(\S+)`)
-		st := r.FindString(line)
-		for _, rne := range st {
-			switch string(rne) {
+		statusField := r.FindString(line)
+		for _, xy := range statusField {
+			switch string(xy) {
 			case "?":
 				status |= (untracked)
 			case "A":
 				status |= (staged)
 			case "M":
 				status |= (modified)
+			case "U":
+				status |= (unmerged)
 			}
 		}
 	}
 
 	var ret string
 	for k, v := range []gitStatusMask{
-		ahead, behind, conflicted, deleted, diverged,
+		ahead, behind, unmerged, deleted, diverged,
 		modified, renamed, staged, stashed, untracked,
 		upToDate,
 	} {
@@ -262,17 +264,30 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 		symbol,
 	)
 
-	if thisRepo.isDirty {
+	if thisRepo.statusMask&unmerged != 0 {
+		// repo has unmerged files - conflicts?, etc
+		statusColor = colors.ByExpression("coral bold")
+		status = fmt.Sprintf(
+			"%s%s%s%s",
+			thisRepo.branch,
+			drift,
+			colors.ByExpression(cfg.SymbolStyle + " golden-rod blink"),
+			thisRepo.status,
+		)
+	} else if thisRepo.isDirty && thisRepo.statusMask&modified != 0 {
+		// all changes staged but not yet committed
+		statusColor = colors.ByExpression(cfg.StagedStyle + " italic")
+	} else if thisRepo.isDirty {
 		// repo has unstaged changes to committed files
 		statusColor = colors.ByExpression(cfg.DirtyStyle)
 	} else if thisRepo.statusMask&modified != 0 {
 		// all changes staged but not yet committed
 		statusColor = colors.ByExpression(cfg.StagedStyle)
 	} else if thisRepo.statusMask&untracked != 0 {
-		// untracked files exist
-		status = fmt.Sprintf("%s%s", thisRepo.branch, symbol)
+		// files that are not tracked
+		statusColor = colors.ByExpression("green-yellow bold")
 	} else {
-		// default case
+		// default case - all clean, merged, good
 		status = thisRepo.branch
 	}
 
