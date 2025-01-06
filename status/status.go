@@ -33,7 +33,11 @@ func (r *StatusRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) 
 	if e["status"] == uint16(0) && e["pipestatus"] == uint16(0) {
 		symbol = ""
 	} else {
-		symbol = fmt.Sprintf("%d|%d", e["status"], e["pipestatus"])
+        if e["status"] != e["pipestatus"] {
+            symbol = fmt.Sprintf("%d|%d", e["status"], e["pipestatus"])
+        } else {
+            symbol = fmt.Sprintf("%d", e["status"])
+        }
 	}
 	style := colors.ByExpression(cfg.Style)
 

@@ -46,14 +46,15 @@ func (r *gitStatusRenderer) Name() string {
 }
 
 type gitrepo struct {
-	isGitDirectory bool
+	aheadBehind    string
 	branch         string
-	remoteBranch   string
+	isBare         bool
+	isDirty        bool
+	isGitDirectory bool
 	remote         string
+	remoteBranch   string
 	rev            string
 	revShort       string
-	isDirty        bool
-	aheadBehind    string
 	status         string
 	statusMask     gitStatusMask
 }
@@ -62,6 +63,9 @@ func init() {
 	thisRepo.isGitDirectory = isGitDirectory()
 
 	if thisRepo.isGitDirectory {
+		bare := isGitRepoBare()
+		thisRepo.isBare = bare
+
 		remote, _ := gitRemote()
 		thisRepo.remote = remote
 
@@ -77,9 +81,11 @@ func init() {
 		isDirty := isGitRepoDirty()
 		thisRepo.isDirty = isDirty
 
-		rev, revShort, _ := gitRev()
-		thisRepo.rev = rev
-		thisRepo.revShort = revShort
+		if !bare {
+			rev, revShort, _ := gitRev()
+			thisRepo.rev = rev
+			thisRepo.revShort = revShort
+		}
 
 		ab, _ := gitAheadBehind(thisRepo.branch)
 		thisRepo.aheadBehind = ab
@@ -96,6 +102,16 @@ func isGitDirectory() bool {
 	}
 	log.Debugf("isGitDirectory: %+v", string(stdout))
 	return true
+}
+
+func isGitRepoBare() bool {
+	stdout, err := _git([]string{
+		"git", "rev-parse", "--is-bare-repository",
+	}...)
+	if err != nil {
+		return false // TODO: this is an erroneous reason to return false
+	}
+	return stdout == "true"
 }
 
 func isGitRepoDirty() bool {
@@ -127,13 +143,13 @@ func gitStatus() (string, gitStatusMask, error) {
 		for _, xy := range statusField {
 			switch string(xy) {
 			case "?":
-				status |= (untracked)
+				status |= untracked
 			case "A":
-				status |= (staged)
+				status |= staged
 			case "M":
-				status |= (modified)
+				status |= modified
 			case "U":
-				status |= (unmerged)
+				status |= unmerged
 			}
 		}
 	}
@@ -271,12 +287,9 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 			"%s%s%s%s",
 			thisRepo.branch,
 			drift,
-			colors.ByExpression(cfg.SymbolStyle + " golden-rod blink"),
+			colors.ByExpression(cfg.SymbolStyle+" golden-rod blink"),
 			thisRepo.status,
 		)
-	} else if thisRepo.isDirty && thisRepo.statusMask&modified != 0 {
-		// all changes staged but not yet committed
-		statusColor = colors.ByExpression(cfg.StagedStyle + " italic")
 	} else if thisRepo.isDirty {
 		// repo has unstaged changes to committed files
 		statusColor = colors.ByExpression(cfg.DirtyStyle)
