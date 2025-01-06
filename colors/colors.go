@@ -309,8 +309,8 @@ func Extended8Bit(i uint8) string {
 // ByExpression ...
 func ByExpression(exp string) string {
 	var style string
-	for _, v := range strings.Split(exp, " ") {
-		style += ByName(v)
+	for _, word := range strings.Split(exp, " ") {
+		style += ByName(word)
 	}
 	return style
 }
@@ -321,8 +321,8 @@ func ByName(s string) string {
 	if !hasHex {
 		caser := cases.Lower(language.Und)
 		S := caser.String(s)
-		val, hasControls := NonPrintables[S]
-		if !hasControls {
+		val, hasNonPrintables := NonPrintables[S]
+		if !hasNonPrintables {
 			log.Fatalf("Could not find color: %s", s)
 		}
 		return val

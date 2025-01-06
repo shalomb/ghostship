@@ -45,7 +45,7 @@ func (r *TimeRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) (s
 
 	style := cfg.Style
 	ret := fmt.Sprintf(
-		"%s%s%s",
+		"\\[%s\\]%s\\[%s\\]",
 		colors.ByName(style),
 		buf.String(),
 		colors.Reset,

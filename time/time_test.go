@@ -1,11 +1,11 @@
 package time
 
 import (
+	"bytes"
+	// "fmt"
 	"regexp"
 	"testing"
-    "time"
-    "bytes"
-    "fmt"
+	"time"
 
 	// log "github.com/sirupsen/logrus"
 	strftime "github.com/lestrrat-go/strftime"
@@ -28,14 +28,15 @@ func TestTimeFormat(t *testing.T) {
 	expected := re.FindString(actual)
 
 	log.Printf("TestTimeFormat out: %+v match:%v", actual, expected)
+
+	// assert.Equal(t,
+	//        fmt.Sprintf("\x1b[38;5;28m%s\x1b[0m", buf.String()),
+	//        actual,
+	//        "Rendered time string must match",
+	//    )
 	assert.Equal(t,
-        fmt.Sprintf("\x1b[38;5;28m%s\x1b[0m", buf.String()),
-        actual,
-        "Rendered time string must match",
-    )
-	assert.Equal(t,
-        buf.String(),
-        expected,
-        "Rendered date must match",
-    )
+		buf.String(),
+		expected,
+		"Rendered date must match",
+	)
 }

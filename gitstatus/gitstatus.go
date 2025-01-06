@@ -63,7 +63,7 @@ func init() {
 
 	if thisRepo.isGitDirectory {
 		bare := isGitRepoBare()
-		thisRepo.isBare = bare
+		thisRepo.isBare = bare // TODO: This is unused today
 
 		branch, _ := gitCurrentBranch()
 		thisRepo.branch = branch
@@ -234,8 +234,8 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 
 	statusColor := colors.ByExpression(cfg.NormalStyle)
 
-	symbol := fmt.Sprintf("%s%s", colors.ByExpression(cfg.SymbolStyle), thisRepo.status)
-	drift := fmt.Sprintf("%s%s", colors.ByExpression(cfg.DriftStyle), thisRepo.aheadBehind)
+	symbol := fmt.Sprintf("\\[%s\\]%s", colors.ByExpression(cfg.SymbolStyle), thisRepo.status)
+	drift := fmt.Sprintf("\\[%s\\]%s", colors.ByExpression(cfg.DriftStyle), thisRepo.aheadBehind)
 
 	status := fmt.Sprintf(
 		"%s%s%s",
@@ -248,7 +248,7 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 		// repo has unmerged files - conflicts?, etc
 		statusColor = colors.ByExpression("coral bold")
 		status = fmt.Sprintf(
-			"%s%s%s%s",
+			"%s%s\\[%s\\]%s",
 			thisRepo.branch,
 			drift,
 			colors.ByExpression(cfg.SymbolStyle+" golden-rod blink"),
@@ -268,7 +268,7 @@ func (r *gitStatusRenderer) Render(c config.AppConfig, _ config.EnvironmentConfi
 		status = thisRepo.branch
 	}
 
-	return fmt.Sprintf("%s%s%s",
+	return fmt.Sprintf("\\[%s\\]%s\\[%s\\]",
 		statusColor,
 		status,
 		colors.Reset,
