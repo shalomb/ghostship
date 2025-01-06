@@ -64,3 +64,5 @@ submodules/**
 main
 ghostship*
 TODO.md
+cover.out
+cover.html
