@@ -54,6 +54,8 @@ chpwd () {
     CDPATH="$PWD:$OLDPWD:..:~"
 }
 
+PROMPT_CHARACTER=$(%[1]s character)
+
 prompt-command() {
     local _last_cmd_ec="$1" _last_cmd_pipestatus="$2" cmd_end_time="$3";
 
@@ -64,6 +66,7 @@ prompt-command() {
         --terminal-width="${COLUMNS}"
         --status="$_last_cmd_ec"
         --pipestatus="$_last_cmd_pipestatus"
+        --prompt-character="$PROMPT_CHARACTER"
     );
 
     if [[ -n $cmd_start_time ]]; then

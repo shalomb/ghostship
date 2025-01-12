@@ -11,7 +11,9 @@ import (
 
 func TestCharacterFormat(t *testing.T) {
 	renderer := Renderer()
-	actual, err := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{})
+	actual, err := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{
+		"prompt-character": "#",
+    })
 	assert.Equal(t, err, nil, "Error not empty")
 
     expected := "❯ "

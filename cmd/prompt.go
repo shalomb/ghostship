@@ -21,13 +21,14 @@ import (
 
 // promptCmd represents the prompt command
 var (
-	terminalWidth uint16
-	pipeStatus    uint16
-	lastStatus    uint16
-	cmdDuration   uint16
+	terminalWidth   uint16
+	pipeStatus      uint16
+	lastStatus      uint16
+	cmdDuration     uint16
+	promptCharacter string
 
 	promptCmd = &cobra.Command{
-		Use:   "prompt --status $? --pipestatus $PIPESTATUS --cmd-duration N --terminal-width $COLUMNS",
+		Use:   "prompt --status $? --pipestatus $PIPESTATUS --cmd-duration $DURATION --terminal-width $COLUMNS --prompt-character $CHARACTER",
 		Short: "prompt the active window with a letter/number",
 		Long: `Windows can be prompted and assigned letters or numbers as
 	shortcuts that can later be used in activating/showing those windows`,
@@ -54,15 +55,19 @@ func init() {
 	promptCmd.Flags().Uint16VarP(&cmdDuration, "cmd-duration", "t", cmdDuration, "The duration in milliseconds the last command took")
 	// _ = promptCmd.MarkFlagRequired("cmd-duration")
 
+	promptCmd.Flags().StringVarP(&promptCharacter, "prompt-character", "m", promptCharacter, "Value of $COLUMNS")
+	_ = promptCmd.MarkFlagRequired("prompt-character")
+
 	rootCmd.AddCommand(promptCmd)
 }
 
-func renderPS1(args []string) error {
+func renderPS1(_ []string) error {
 	env := config.EnvironmentConfig{
-		"status":         lastStatus,
-		"pipestatus":     pipeStatus,
-		"terminal-width": terminalWidth,
-		"cmd-duration":   cmdDuration,
+		"status":           lastStatus,
+		"pipestatus":       pipeStatus,
+		"terminal-width":   terminalWidth,
+		"cmd-duration":     cmdDuration,
+		"prompt-character": promptCharacter,
 	}
 
 	conf, requiredModules, configFields := config.Parse(cfgFile)

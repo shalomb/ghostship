@@ -24,8 +24,9 @@ type BaseComponentConfig struct {
 // CharacterConfig ...
 type CharacterConfig struct {
 	BaseComponentConfig
-	SuccessSymbol string `toml:"success_symbol"`
-	ErrorSymbol   string `toml:"error_symbol"`
+	Characters    string `toml:"characters"`
+	SuccessColour string `toml:"success_colour"`
+	ErrorColour   string `toml:"error_colour"`
 }
 
 // CommandNumberConfig ...
@@ -85,8 +86,9 @@ func DefaultConfig() AppConfig {
 				Format: "$symbol ",
 				Style:  "blue",
 			},
-			"[❯](bold green) ", // SuccessSymbol
-			"[❯](bold red) ",   // ErrorSymbol
+			"め❯ℰℯ☡ɤɛʃʅɅȲȜȤɣʎʒɁβγϕδΔΨϝΩζηθλξπΠϞΣτΦχψωℵαAβBγΓδΔϵEζZηHθΘιIκKλΛμMνNξΞoOπΠρPσΣτTυϒϕΦχXψΨωΩ", // Characters
+			"dark-orchid bold", // SuccessColour
+			"red bold",         // ErrorSymbol
 		},
 		CommandNumberConfig: CommandNumberConfig{
 			BaseComponentConfig{

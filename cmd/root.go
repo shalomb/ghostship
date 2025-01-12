@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	appName            = "ghostship"
-	cfgFile, _         = xdg.ConfigFile(path.Join(appName, "config.toml"))
-	cfgDir      string = filepath.Dir(cfgFile)
+	appName     = "ghostship"
+	cfgFile, _  = xdg.ConfigFile(path.Join(appName, "config.toml"))
+	cfgDir      = filepath.Dir(cfgFile)
 	userLicense string
 
-    buildParams BuildParams
+	buildParams BuildParams
 
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
@@ -66,9 +66,9 @@ func initConfig() {
 	} else {
 		// Search config in home directory with name ".cobra" (without extension).
 		viper.AddConfigPath(xdg.Home)
+		viper.AddConfigPath(cfgDir)
 		viper.AddConfigPath(path.Join(xdg.ConfigHome, appName))
-		// viper.AddConfigPath(path.Join(xdg.StateHome, appName))
-		viper.SetConfigType("yaml")
+		viper.SetConfigType("toml")
 		viper.SetConfigName(appName)
 	}
 

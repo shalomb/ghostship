@@ -20,4 +20,3 @@ var timeCmd = &cobra.Command{
 		fmt.Printf("%v", time.Now().UnixMilli())
 	},
 }
-
