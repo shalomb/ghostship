@@ -14,9 +14,8 @@ func init() {
 // colorsCmd represents the colors command
 var colorsCmd = &cobra.Command{
 	Use:   "colors",
-	Short: "colors the active window with a letter/number",
-	Long: `Windows can be colorsed and assigned letters or numbers as
-	shortcuts that can later be used in activating/showing those windows`,
+	Short: "colours prints a table of supported colours and their names",
+	Long: `colours prints a table of supported colours and their names`,
 	Run: func(_ *cobra.Command, args []string) {
 		exitCode := 0
 		if err := colorsPS1(args); err != nil {

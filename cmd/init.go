@@ -19,7 +19,7 @@ var (
 		Args: cobra.MinimumNArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
 			exitCode := 0
-			if err := renderInit(args...); err != nil {
+			if _, err := renderInit(args...); err != nil {
 				exitCode = 7
 			}
 			os.Exit(exitCode)
@@ -31,14 +31,15 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-func renderInit(args ...string) error {
-	for _, v := range args {
+func renderInit(args ...string) (string, error) {
+	var fstr string
+	for _, shell := range args {
 
 		c, _ := os.Executable()
-		log.Debugf("Rendering init scripts for %+v using %v", v, c)
+		log.Debugf("Rendering init scripts for %+v using %v", shell, c)
 
-		if v == "bash" {
-			fstr := heredoc.Doc(`
+		if shell == "bash" {
+			fstr = heredoc.Doc(`
 call-if-defined () {
     defined "$1" && "$@"
 }
@@ -63,7 +64,7 @@ prompt-command() {
     [[ ${_pwd:=$PWD} != $PWD ]] && call-if-defined chpwd;
 
     local -a ARGS=(
-        --terminal-width="${COLUMNS}"
+        --terminal-width="$COLUMNS"
         --status="$_last_cmd_ec"
         --pipestatus="$_last_cmd_pipestatus"
         --prompt-character="$PROMPT_CHARACTER"
@@ -92,5 +93,5 @@ PROMPT_COMMAND='
 			fmt.Printf(fstr, c)
 		}
 	}
-	return nil
+	return fstr, nil
 }
