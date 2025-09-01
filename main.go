@@ -40,5 +40,4 @@ func main() {
 		}); err != nil {
 		os.Exit(1)
 	}
-
 }
