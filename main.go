@@ -39,5 +39,6 @@ func main() {
 			Version:   Version,
 		}); err != nil {
 		os.Exit(1)
+
 	}
 }

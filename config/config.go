@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	// "fmt"
+
 	toml "github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,9 +48,9 @@ type DirectoryConfig struct {
 // GitStatusConfig ...
 type GitStatusConfig struct {
 	BaseComponentConfig
+	NormalStyle string `toml:"normal_style"`
 	DirtyStyle  string `toml:"dirty_style"`
 	DriftStyle  string `toml:"drift_style"`
-	NormalStyle string `toml:"normal_style"`
 	StagedStyle string `toml:"staged_style"`
 	SymbolStyle string `toml:"symbol_style"`
 }
@@ -80,7 +80,7 @@ type AppConfig struct {
 // DefaultConfig ...
 func DefaultConfig() AppConfig {
 	return AppConfig{
-		Format: "foo",
+		Format: `$time$commandno$directory$gitstatus$duration$status$character`,
 		CharacterConfig: CharacterConfig{
 			BaseComponentConfig{
 				Format: "$symbol ",
@@ -92,20 +92,38 @@ func DefaultConfig() AppConfig {
 		},
 		CommandNumberConfig: CommandNumberConfig{
 			BaseComponentConfig{
-				Format: "!",
-				Style:  "gray bold",
+				Format: "\\!",
+				Style:  "light-gray dim",
+			},
+		},
+		DirectoryConfig: DirectoryConfig{
+			BaseComponentConfig{
+				Format: " %s",
+				Style:  "steel-blue light-sea-green bold",
 			},
 		},
 		DurationConfig: DurationConfig{
 			BaseComponentConfig{
-				Format: "took %ds",
+				Format: " took %ds",
 				Style:  "gray bold",
 			},
 			2, // MinTime
 		},
+		GitStatusConfig: GitStatusConfig{
+			BaseComponentConfig{
+				Format: " %s",
+				Style:  "yellow",
+			},
+			"medium-aqua-marine bold", // NormalStyle
+			"dark-orange bold",        // DirtyStyle
+			"orange-red bold",         // DriftStyle
+			"pale-golden-rod bold",    // StagedStyle
+			"reset olive bold",        // SymbolStyle
+		},
 		StatusConfig: StatusConfig{
 			BaseComponentConfig{
-				Style: "green",
+				Format: " %s",
+				Style:  "light-coral dim",
 			},
 		},
 		TimeConfig: TimeConfig{
@@ -123,7 +141,7 @@ func Parse(cfgFile string) (AppConfig, []string, map[string]string) {
 
 	tomlData, err := os.ReadFile(cfgFile)
 	if err != nil {
-		log.Fatalf("Unable to read config file: %v", err)
+		log.Debugf("Unable to read config file: %v", err)
 	}
 
 	if _, err := toml.Decode(string(tomlData), &conf); err != nil {
@@ -140,6 +158,7 @@ func Parse(cfgFile string) (AppConfig, []string, map[string]string) {
 	}
 	log.Debugf("requiredFields: %+v", requiredFields)
 
+	// Get struct fields with toml tags and their counterpart configuration
 	confFields := make(map[string]string)
 	val := reflect.ValueOf(conf)
 	for i := 0; i < val.NumField(); i++ {

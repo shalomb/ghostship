@@ -38,7 +38,9 @@ func (r *StatusRenderer) Render(c config.AppConfig, e config.EnvironmentConfig) 
 		} else {
 			symbol = fmt.Sprintf("%d", e["status"])
 		}
+		symbol = fmt.Sprintf(cfg.Format, symbol)
 	}
+
 	style := colors.ByExpression(cfg.Style)
 
 	ret := fmt.Sprintf(

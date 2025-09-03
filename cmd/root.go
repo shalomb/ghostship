@@ -78,7 +78,7 @@ func initConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			log.Warnf("Warning: config file not found: %v, %v", cfgFile, err)
 		} else {
-			log.Warnf("Warning: Error in processing config file: %v, %v", cfgFile, err)
+			log.Debugf("Warning: Error in processing config file: %v, %v", cfgFile, err)
 		}
 	}
 	log.Debugf("Using config file: %v", viper.ConfigFileUsed())

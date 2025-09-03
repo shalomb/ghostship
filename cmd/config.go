@@ -13,6 +13,8 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 }
 
+// TODO: This section remains cruft - cleanup
+
 // configCmd represents the config command
 var configCmd = &cobra.Command{
 	Use:   "config",

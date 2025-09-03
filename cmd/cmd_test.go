@@ -81,6 +81,8 @@ func TestInitCmd(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 	assert.Nil(t, err)
 
+	// TODO: Cleanup commented code below
+
 	// os.Executable() under `go test` does not pointcc``
 	// err = os.WriteFile(tmpfile.Name(), []byte(actual), 0644)
 	// assert.Nil(t, err)

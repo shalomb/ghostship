@@ -76,6 +76,8 @@ prompt-command() {
     fi;
     cmd_start_time=;
 
+	tput sc; printf '%%*s' $(tput cols) "$(date +%%H%%M%%S)"; tput rc;
+
     PS0='${cmd_start_time:0:$((cmd_start_time=$SECONDS,0))}';
     PS1="$(%[1]s prompt "${ARGS[@]}")";
     _pwd="$PWD";

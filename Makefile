@@ -81,6 +81,7 @@ clean:
 
 deploy: run
 	install -v -m775 ./"$(APPNAME)" ~/.local/bin/"$(APPNAME)"
+	ln -svf $$PWD/"$(APPNAME)" ~/.local/bin/"$(APPNAME)"
 	hash -r
 
 lint:
