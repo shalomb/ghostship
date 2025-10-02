@@ -40,6 +40,10 @@ func renderInit(args ...string) (string, error) {
 
 		if shell == "bash" {
 			fstr = heredoc.Doc(`
+defined () {
+    type "$1" >/dev/null 2>&1
+}
+
 call-if-defined () {
     defined "$1" && "$@"
 }
@@ -64,7 +68,7 @@ prompt-command() {
     [[ ${_pwd:=$PWD} != $PWD ]] && call-if-defined chpwd;
 
     local -a ARGS=(
-        --terminal-width="$COLUMNS"
+        --terminal-width="${COLUMNS:-80}"
         --status="$_last_cmd_ec"
         --pipestatus="$_last_cmd_pipestatus"
         --prompt-character="$PROMPT_CHARACTER"
