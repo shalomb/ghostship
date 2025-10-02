@@ -90,7 +90,7 @@ run: build
 	@:
 	source <(./"$(APPNAME)" init bash);
 	./"$(APPNAME)" version
-	time ./"$(APPNAME)" prompt --terminal-width $$COLUMNS --status 0 --pipestatus $$PIPESTATUS --cmd-duration 1 --prompt-character "T" >/dev/null
+	time ./"$(APPNAME)" prompt --terminal-width $${COLUMNS:-80} --status 0 --pipestatus 0 --cmd-duration 1 --prompt-character "T" >/dev/null
 
 test:
 	$(GRC) go test -race -buildvcs ./... $(RUN_ARGS) # allow 'make test -- -v'

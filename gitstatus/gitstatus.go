@@ -2,11 +2,13 @@
 package gitstatus
 
 import (
+	"context"
 	"fmt"
 	// log "github.com/sirupsen/logrus"
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	colors "github.com/shalomb/ghostship/colors"
 	config "github.com/shalomb/ghostship/config"
@@ -216,7 +218,11 @@ func gitAheadBehind(branch string, remote string) (string, error) {
 }
 
 func _git(s ...string) (string, error) {
-	cmd := exec.Command(s[0], s[1:]...)
+	// Add timeout to prevent hangs during SSH sessions or slow network conditions
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	
+	cmd := exec.CommandContext(ctx, s[0], s[1:]...)
 	stdout, err := cmd.Output()
 	if err != nil {
 		return string(stdout), err

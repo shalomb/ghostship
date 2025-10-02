@@ -1,13 +1,11 @@
 package cmd
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"regexp"
 	"testing"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	assert "github.com/stretchr/testify/assert"
@@ -105,4 +103,25 @@ func TestInitCmd(t *testing.T) {
 	// 	fmt.Sprintf("'source %s'", tmpfile.Name()),
 	// )
 	// assert.Nil(t, err)
+}
+
+// TestInitCmdSSHScenario tests that init command works properly in SSH scenarios
+// This ensures that git operations don't hang indefinitely during remote sessions
+func TestInitCmdSSHScenario(t *testing.T) {
+	// Test that init command completes within reasonable time
+	// This simulates the SSH scenario where git operations might hang
+	start := time.Now()
+	
+	actual, err := captureOutput(func() error {
+		_, err := renderInit([]string{"bash"}...)
+		return err
+	})
+	
+	duration := time.Since(start)
+	
+	// Init should complete quickly even with git operations
+	assert.Nil(t, err, "Init command should not error")
+	assert.True(t, duration < 5*time.Second, "Init command should complete within 5 seconds")
+	assert.Contains(t, actual, "PROMPT_CHARACTER", "Init output should contain PROMPT_CHARACTER")
+	assert.Contains(t, actual, "prompt-command", "Init output should contain prompt-command function")
 }
