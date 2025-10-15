@@ -83,6 +83,8 @@ deploy: run
 	install -v -m775 ./"$(APPNAME)" ~/.local/bin/"$(APPNAME)"
 	hash -r
 
+install: deploy
+
 lint:
 	golangci-lint run --enable-all
 
