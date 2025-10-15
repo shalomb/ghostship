@@ -29,7 +29,7 @@ func (r *DurationRenderer) Render(c config.AppConfig, e config.EnvironmentConfig
 	cfg := c.DurationConfig
 	log.Debugf("DurationConfig: %+v, s: %+v, v: %+v", cfg, e, cfg.Format)
 
-    if e["cmd-duration"] != nil && e["cmd-duration"].(uint16) < cfg.MinTime {
+    if e["cmd-duration"] != nil && e["cmd-duration"].(uint32) < cfg.MinTime {
         return "", nil
     }
 

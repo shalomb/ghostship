@@ -24,7 +24,7 @@ var (
 	terminalWidth   uint16
 	pipeStatus      uint16
 	lastStatus      uint16
-	cmdDuration     uint16
+	cmdDuration     uint32
 	promptCharacter string
 
 	promptCmd = &cobra.Command{
@@ -52,7 +52,7 @@ func init() {
 	promptCmd.Flags().Uint16VarP(&pipeStatus, "pipestatus", "p", pipeStatus, "Value of $PIPESTATUS")
 	_ = promptCmd.MarkFlagRequired("pipestatus")
 
-	promptCmd.Flags().Uint16VarP(&cmdDuration, "cmd-duration", "t", cmdDuration, "The duration in milliseconds the last command took")
+	promptCmd.Flags().Uint32VarP(&cmdDuration, "cmd-duration", "t", cmdDuration, "The duration in milliseconds the last command took")
 	// _ = promptCmd.MarkFlagRequired("cmd-duration")
 
 	promptCmd.Flags().StringVarP(&promptCharacter, "prompt-character", "m", promptCharacter, "Value of $COLUMNS")

@@ -37,7 +37,7 @@ type CommandNumberConfig struct {
 // DurationConfig ...
 type DurationConfig struct {
 	BaseComponentConfig
-	MinTime uint16 `toml:"min_time"`
+	MinTime uint32 `toml:"min_time"`
 }
 
 // DirectoryConfig ...
