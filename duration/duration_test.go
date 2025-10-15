@@ -14,7 +14,7 @@ func TestDurationFormat(t *testing.T) {
 
 	for _, v := range []struct {
 		name     string
-		duration uint16
+		duration uint32
 		expected string
 	}{
 		{"Duration 0", 0, ""},
@@ -23,7 +23,7 @@ func TestDurationFormat(t *testing.T) {
 		{"Duration 3", 3, `took 3`},
 	} {
 		actual, err := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{
-			"cmd-duration": uint16(v.duration),
+			"cmd-duration": uint32(v.duration),
 		})
 		assert.Equal(t, err, nil, "Error not empty")
 
@@ -43,14 +43,14 @@ func TestDurationFormatNegative(t *testing.T) {
 
 	for _, v := range []struct {
 		name     string
-		duration uint16
+		duration uint32
 		expected string
 	}{
 		{"Zero", 0, "took"},
 		{"NonEmpty", 2, ""},
 	} {
 		actual, _ := renderer.Render(config.DefaultConfig(), config.EnvironmentConfig{
-			"cmd-duration": uint16(v.duration),
+			"cmd-duration": uint32(v.duration),
 		})
 		assert.NotEqual(t, actual, nil,
 			fmt.Sprintf("Test %s must not pass", v.name),
