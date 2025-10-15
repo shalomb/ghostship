@@ -93,6 +93,9 @@ PROMPT_COMMAND='
     done;
     call-if-defined prompt-command "$_last_cmd_ec" "$_last_cmd_pipestatus_result" "$_last_cmd_end_time";
   '
+
+# Initialize the prompt immediately
+call-if-defined prompt-command 0 0 0
                 `)
 			fmt.Printf(fstr, c)
 		}
