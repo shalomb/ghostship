@@ -185,6 +185,11 @@ func gitRev() (string, string, error) {
 	stdout, err := _git([]string{
 		"git", "rev-parse", "HEAD",
 	}...)
+	
+	// Add bounds checking to prevent slice bounds out of range panic
+	if len(stdout) < 8 {
+		return string(stdout), string(stdout), err
+	}
 	return string(stdout), string(stdout)[0:8], err
 }
 
